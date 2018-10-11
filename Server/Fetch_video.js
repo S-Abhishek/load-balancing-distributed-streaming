@@ -8,7 +8,7 @@ app.use(express.static(path.join(__dirname,'public')))
 app.get('/video', function(req,res){
  	res.writeHead(206,{"Content-Type":"video/mp4"});
 	var location="/Videos/lwt1.mp4";
-	var outStream=fs.createWriteStream(__dirname+"/Videos/lwt1.mp4");
+	var outStream=fs.createWriteStream("/Videos/lwt1.mp4");
 	ffmpeg(location)
 	.audioCodec('libmp3lame')
 	.videoCodec('libx264')
