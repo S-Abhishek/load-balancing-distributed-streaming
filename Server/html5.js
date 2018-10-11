@@ -6,7 +6,7 @@ const app = express()
 
 
 app.get('/video', function(req, res) {
-  const path = 'Videos/sample.mp4'
+  const path = 'Videos/lwt1.mp4'
   const stat = fs.statSync(path)
   const fileSize = stat.size
   const range = req.headers.range

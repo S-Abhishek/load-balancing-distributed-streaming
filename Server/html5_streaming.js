@@ -6,7 +6,7 @@ const path=require('path')
 
 app.get('/video',function(req,res){
 	
-	const path='Videos/sample.mp4'
+	const path='Videos/lwt1.mp4'
 	const stat=fs.statSync(path)
 	const fileSize=stat.size
 	const range=req.headers.range
@@ -15,21 +15,21 @@ app.get('/video',function(req,res){
 	{
 		
 		var seg= range.replace(/bytes=/, "").split("-")
-		var beg=parseInt(seg[0],10)
+		var start=parseInt(seg[0],10)
 		var end=seg[1]
 			? parseInt(seg[1],10)
 			:fileSize-1
 		
-		var chunk=(end-beg)+1
-		var file=fs.createReadStream(path,{beg,end})
+		var chunk=(end-start)+1
+		var file=fs.createReadStream(path,{start,end})
 		console.log(chunk)
 		
-		const head = {
-			'Content-Range' : `bytes ${beg}-${end}/${fileSize}`,
-			'Accept-Ranges':'bytes',
-			'Content-Length': chunk,
-			'Content-Type':'video/mp4',
-		}
+				var head = {
+		      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+		      'Accept-Ranges': 'bytes',
+		      'Content-Length': chunk,
+		      'Content-Type': 'video/mp4',
+  		  }
 		console.log(head)
 		res.writeHead(206,head)	
 		file.pipe(res)
