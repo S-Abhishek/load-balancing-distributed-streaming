@@ -16,6 +16,8 @@ client.connect("mongodb://localhost:27017/vid_loc",function(err,db){
 			loc:['R1','R2','R3']
 		});
 		console.log("One item added");
+	
+		collection.find();
 	});
 });
 
