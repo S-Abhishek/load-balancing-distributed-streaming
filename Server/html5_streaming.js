@@ -3,6 +3,24 @@ const app=express()
 const port = 3000
 const fs=require('fs')
 const path=require('path')
+const client=require('mongodb').MongoClient;
+
+client.connect("mongodb://localhost:27017/vid_loc",function(err,db){
+	db.collection('vidloc',function(err,collection)
+	{
+		collection.insert(
+		{
+			id:1,
+			name:'Avengers 3',
+			description:'Thanos vs every other superhero',
+			loc:['R1','R2','R3']
+		});
+		console.log("One item added");
+	});
+});
+
+
+
 
 app.get('/video',function(req,res){
 	
