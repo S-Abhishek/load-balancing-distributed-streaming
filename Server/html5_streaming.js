@@ -5,27 +5,36 @@ const fs=require('fs')
 const path=require('path')
 const client=require('mongodb').MongoClient;
 
-client.connect("mongodb://localhost:27017/vid_loc",function(err,db){
-	db.collection('vidloc',function(err,collection)
+
+
+
+
+app.get('/watch',function(req,res){
+	
+	id=req.query.id;
+	qty=req.query.qty;
+	console.log(id,qty);
+
+	client.connect("mongodb://localhost:27017/youtube",function(err,db)
 	{
-		collection.insert(
+		 var video_location=db.db("youtube");
+		video_location.collection("videoloc").find(query).toArray(function(err,result)
 		{
-			id:1,
-			name:'Avengers 3',
-			description:'Thanos vs every other superhero',
-			loc:['R1','R2','R3']
-		});
-		console.log("One item added");
-	
-		collection.find();
+			if(err)
+				throw err;
+			console.log(result);
+			db.close();
+		}
 	});
-});
 
 
 
 
-app.get('/video',function(req,res){
-	
+
+
+
+
+
 	const path='Videos/lwt1.mp4'
 	const stat=fs.statSync(path)
 	const fileSize=stat.size
