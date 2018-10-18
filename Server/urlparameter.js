@@ -76,13 +76,13 @@ app.get('/watch',function(req,res){
 			if(!found)	
    		 	{
 			var lc = "location"
-            	var query1={ "_id" :ObjectId("5bc8558e681ac8ae25b30e42"), "location" : { $exists: true}  };
-                vidlocs.find(query1).project({"location" : 1, _id : 0}).toArray(function(err,result)
-                {
+            		var query1={ "_id" :ObjectId("5bc8558e681ac8ae25b30e42"), "location" : { $exists: true}  };
+                	vidlocs.find(query1).project({"location" : 1, _id : 0}).toArray(function(err,result)
+               		 {
 					console.log(result)
 					if(result.length)
 					min_ip = findMin(result[0].location)
-                });
+              		  });
 
    		 	}
 			   
