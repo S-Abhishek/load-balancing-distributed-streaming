@@ -1,14 +1,43 @@
 const express = require("express")
 const app=express()
-const port = 3000
 const fs=require('fs')
 const path=require('path')
 const client=require('mongodb').MongoClient;
+const { StringDecoder } = require('string_decoder');
+const decoder = new StringDecoder('utf8');
+const net = require('net');
+const threshold_data = require("./threshold_info.json") 
 var ObjectId=require('mongodb').ObjectID;
 
+const port = 3000
 const central_server_ip = '10.0.2.13';
-load_data={"ip1":3,"ip2":1,"ip3":1,"ip4":4,"ip5":5,"ip6":6}
-threshold_data={"ip1":6,"ip2":6,"ip3":3,"ip4":5,"ip5":4,"ip6":6}
+const server_address = '/tmp/loads';
+
+
+load_data = {}
+console.log(threshold_data)
+
+fs.unlink(server_address, ()=>{
+    console.log("Unlinked");
+});
+
+const loadServer = net.createServer((socket) => {
+    socket.end('goodbye\n');
+  }).on('error', (err) => {
+    // handle errors here
+    throw err;
+  }).on('connection', (socket) => {
+      console.log("Unix Socket Connected")
+      socket.on('data', (data) => {
+            //load_data = decoder.write(data).split(",").map(parseFloat);
+            load_data = JSON.parse(decoder.write(data))
+      });
+  });
+
+loadServer.listen( server_address , () => {
+    console.log('loadServer bound');
+});
+
 
 
 function findMin(list_available_loc)
@@ -20,7 +49,7 @@ function findMin(list_available_loc)
         console.log(region)
 		for(var ip in list_available_loc[region])
 		{
-			if(load_data[list_available_loc[region][ip]] < threshold_data[list_available_loc[region][ip]])
+			if(load_data[list_available_loc[region][ip]] < threshold_data[list_available_loc[region][ip]]["grade_s"])
 			{
 				if(load_data[list_available_loc[region][ip]] < min)
 				{
@@ -87,7 +116,7 @@ app.get('/watch',function(req,res){
    		 	}
 			   
 			console.log("Redirecting to " + min_ip)
-			res.redirect(min_ip+"/watch?id="+id+"&qty="+qty);
+			res.redirect("http://"+min_ip+"/watch?id="+id+"&qty="+qty);
 			db.close();
 		   
    	 	});
