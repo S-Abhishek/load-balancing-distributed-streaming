@@ -8,7 +8,8 @@ const decoder = new StringDecoder('utf8');
 const net = require('net');
 const threshold_data = require("./threshold_info.json") 
 var ObjectId=require('mongodb').ObjectID;
-
+const ip_index = fs.readFileSync("./mfile", "utf8" ).split("\n");
+const adj_data = require('./adj_data.json')
 const port = 3000
 const central_server_ip = '10.0.2.13';
 const server_address = '/tmp/loads';
@@ -38,6 +39,32 @@ loadServer.listen( server_address , () => {
     console.log('loadServer bound');
 });
 
+
+void RemoteCopy(to, locations, name, qty)
+{	
+	candidates = adj_data[to]
+	var min_dist = Math.min(...candidates.filter(Boolean).filter(
+		function(e){
+			return  locations.includes(ip_index[candidates.indexOf(e)]);
+			
+		},
+	))
+	
+	var min_ip_index  = adj_data[to].indexOf(min_dist)
+	var from = ip_index[min_ip_index]
+	console.log(min_dist,min_ip_index,from)
+	
+	arg1 = from+":~/Videos/"+name+qty+".mp4"
+	arg2 = to+":~/Videos"
+	console.log("Copyting from " + from + " to " +to)
+	const child = execFile("scp", [arg1,arg2] , (error, stdout, stderr) => {
+	  if (error) {
+	    throw error;
+	  }
+		console.log(stdout)
+	});
+}
+
 function findMin(list_available_loc)
 {
 	var min = 100;
@@ -45,20 +72,18 @@ function findMin(list_available_loc)
 	for(var region in list_available_loc)
 	{ 
         console.log(region)
-
-		if(load_data[list_available_loc[region]] < threshold_data[list_available_loc[region]]["grade_s"])
+		ip = list_available_loc[region]
+		if(load_data[ip] < threshold_data[ip]["grade_s"] && load_data[ip] < min)
 		{
-			if(load_data[list_available_loc[region]] < min)
-			{
-				min = load_data[list_available_loc[region]]
-				min_ip = list_available_loc[region]
-
-			}	 
+			min = load_data[ip]
+			min_ip = ip
 		} 
 		
 	}
 	return min_ip
 }
+
+
 
 client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 {
@@ -125,6 +150,7 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 									{
 										reg_ip = result["value"]["ip"]
 										console.log("copy dude to "+reg_ip)
+										RemoteCopy( reg_ip, Object.values(locations), id, qty )
 										vidlocs.findOneAndUpdate(
 											{  _id : ObjectId(id) },
 											{ $set :  { ["locations."+reg] : reg_ip } },
