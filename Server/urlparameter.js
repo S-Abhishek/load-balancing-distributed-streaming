@@ -2,6 +2,7 @@ const express = require("express")
 const app=express()
 const fs=require('fs')
 const path=require('path')
+const { execFile } = require('child_process');
 const client=require('mongodb').MongoClient;
 const { StringDecoder } = require('string_decoder');
 const decoder = new StringDecoder('utf8');
@@ -40,7 +41,7 @@ loadServer.listen( server_address , () => {
 });
 
 
-void RemoteCopy(to, locations, name, qty)
+function RemoteCopy(to, locations, name, qty)
 {	
 	candidates = adj_data[to]
 	var min_dist = Math.min(...candidates.filter(Boolean).filter(
