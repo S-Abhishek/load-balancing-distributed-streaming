@@ -41,7 +41,7 @@ loadServer.listen( server_address , () => {
 });
 
 
-function RemoteCopy(to, locations, name, qty)
+function RemoteCopy(to, locations, name)
 {	
 	candidates = adj_data[to]
 	var min_dist = Math.min(...candidates.filter(Boolean).filter(
@@ -55,7 +55,7 @@ function RemoteCopy(to, locations, name, qty)
 	var from = ip_index[min_ip_index]
 	console.log(min_dist,min_ip_index,from)
 	
-	arg1 = from+":~/Videos/"+name+qty+".mp4"
+	arg1 = from+":~/Videos/"+name+".mp4"
 	arg2 = to+":~/Videos"
 	console.log("Copyting from " + from + " to " +to)
 	const child = execFile("scp", [arg1,arg2] , (error, stdout, stderr) => {
@@ -92,24 +92,22 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 	app.get('/watch',function(req,res)
 	{
     	console.log("Request received")
-		if( Object.keys(req.query).length < 3)
+		if( Object.keys(req.query).length < 2)
 		{
 			res.send('Error')
 			return;
 		}
 	
-		id=req.query.id.toString();
-   		qty=req.query.qty;
-   	 	reg=req.query.reg.toString();
+		vid = req.query.id.toString();
+   	 	reg = req.query.reg.toString();
 
    	  	const VideoDB=db.db("VideoDB");
    	 
    	 	console.log("here",reg);
    		const vidlocs = VideoDB.collection("vidlocs")
-   	 	var query={"_id" :ObjectId(id), "locations" : {$exists : true} };
+   	 	var query = {"vid" :vid, "locations" : {$exists : true} };
    	 	vidlocs.find(query).project({ "locations" : 1, _id : 0} ).toArray(function(err,result)
    	 	{
-			
    			if(err)
    				throw err;
 			
@@ -129,7 +127,7 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 			
 			   
 				console.log("Redirecting to " + min_ip)
-				res.redirect("http://"+min_ip+"/watch?id="+id+"&qty="+qty);
+				res.redirect("http://"+min_ip+"/watch?id="+id);
 
 				if(!(reg in locations))
 				{
@@ -151,9 +149,9 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 									{
 										reg_ip = result["value"]["ip"]
 										console.log("copy dude to "+reg_ip)
-										RemoteCopy( reg_ip, Object.values(locations), id, qty )
+										RemoteCopy( reg_ip, Object.values(locations), id )
 										vidlocs.findOneAndUpdate(
-											{  _id : ObjectId(id) },
+											{  vid : vid },
 											{ $set :  { ["locations."+reg] : reg_ip } },
 											{
 												upsert:true,
@@ -165,6 +163,11 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 						}
 					)
 				}
+			}
+			else
+			{
+				res.send("Video not Found")
+				return;
 			}
 			
 			//db.close();	   

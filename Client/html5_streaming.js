@@ -3,39 +3,20 @@ const app=express()
 const port = 3000
 const fs=require('fs')
 const path=require('path')
-const client=require('mongodb').MongoClient;
-
-
-
-
 
 app.get('/watch',function(req,res){
 	
-	id=req.query.id;
-	qty=req.query.qty;
-	console.log(id,qty);
+	vid=req.query.id;
+	console.log("Video requested" + id);
+	
+	const path="~/Videos/"+ vid +".mp4"
 
-	client.connect("mongodb://localhost:27017/youtube",function(err,db)
+	if(!fs.existsSync(path))
 	{
-		 var video_location=db.db("youtube");
-		video_location.collection("videoloc").find(query).toArray(function(err,result)
-		{
-			if(err)
-				throw err;
-			console.log(result);
-			db.close();
-		}
-	});
+		res.send('Video not Found')
+		return;
+	}
 
-
-
-
-
-
-
-
-
-	const path='Videos/lwt1.mp4'
 	const stat=fs.statSync(path)
 	const fileSize=stat.size
 	const range=req.headers.range
