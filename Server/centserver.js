@@ -32,7 +32,8 @@ const loadServer = net.createServer((socket) => {
       console.log("Unix Socket Connected")
       socket.on('data', (data) => {
             //load_data = decoder.write(data).split(",").map(parseFloat);
-            load_data = JSON.parse(decoder.write(data))
+			load_data = JSON.parse(decoder.write(data))
+			console.log("recieved",load_data);
       });
   });
 
@@ -41,23 +42,24 @@ loadServer.listen( server_address , () => {
 });
 
 
-function RemoteCopy(to, locations, name)
+function RemoteCopy(to_ip, locations, name)
 {	
 	candidates = adj_data[to]
-	var min_dist = Math.min(...candidates.filter(Boolean).filter(
-		function(e){
-			return  locations.includes(ip_index[candidates.indexOf(e)]);
-			
-		},
-	))
+	locations.push(central_server_ip)
+
+	for(i in candidates)
+	{
+  		if(!locations.includes(ip_index[i]) || candidates[i] == 0)
+    		candidates[i] = Infinity 
+	}
 	
-	var min_ip_index  = adj_data[to].indexOf(min_dist)
-	var from = ip_index[min_ip_index]
-	console.log(min_dist,min_ip_index,from)
+	min_dist = Math.min(...candidates)
+	from_ip = ip_index[candidates.indexOf(min_dist)]
+	console.log("Min dist",min_dist,"From ip", from_ip)
 	
-	arg1 = from+":~/Videos/"+name+".mp4"
-	arg2 = to+":~/Videos"
-	console.log("Copyting from " + from + " to " +to)
+	arg1 = from_ip+":~/Videos/"+name+".mp4"
+	arg2 = to_ip+":~/Videos"
+	console.log("Copyting from " + from_ip + " to " + to_ip)
 	const child = execFile("scp", [arg1,arg2] , (error, stdout, stderr) => {
 	  if (error) {
 	    throw error;
@@ -98,7 +100,7 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 			return;
 		}
 	
-		vid = req.query.id.toString();
+		vid = req.query.vid.toString();
    	 	reg = req.query.reg.toString();
 
    	  	const VideoDB=db.db("VideoDB");
@@ -116,8 +118,10 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 			if(result.length)
 			{
 				const locations = result[0].locations
-				if(reg in locations && load_data[locations[reg]] < threshold_data[locations[reg]] )
+				console.log(load_data[locations[reg]],  threshold_data[locations[reg]])
+				if(reg in locations && load_data[locations[reg]] < threshold_data[locations[reg]]["grade_s"] )
 				{
+					
 					min_ip = locations[reg]
 				} 
 				else
@@ -127,13 +131,13 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 			
 			   
 				console.log("Redirecting to " + min_ip)
-				res.redirect("http://"+min_ip+"/watch?id="+id);
+				res.redirect("http://"+min_ip+":8080/watch?vid="+vid);
 
 				if(!(reg in locations))
 				{
 					VideoDB.collection("hotinfo").findOneAndUpdate(
 						{ "reg" : reg }, 
-						{ $inc : { ["reg_movie_infor."+id] : 1 } },
+						{ $inc : { ["reg_movie_infor."+vid] : 1 } },
 						{
 							upsert:true,
 							returnNewDocument: true
@@ -145,18 +149,20 @@ client.connect("mongodb://localhost:27017/VideoDB",function(err,db)
 				
 							if( result )
 							{
-								if( result["value"]["reg_movie_infor"][id] >= HOT )
+								if( result["value"]["reg_movie_infor"][vid] >= HOT )
 									{
 										reg_ip = result["value"]["ip"]
-										console.log("copy dude to "+reg_ip)
-										RemoteCopy( reg_ip, Object.values(locations), id )
+										RemoteCopy( reg_ip, Object.values(locations), vid )
 										vidlocs.findOneAndUpdate(
-											{  vid : vid },
+											{  "vid" : vid },
 											{ $set :  { ["locations."+reg] : reg_ip } },
 											{
 												upsert:true,
 											},function(err, result){
-												console.log("Updated vidloc "+err)
+												if(err)
+													throw(err)
+												else
+													console.log("Updated vidloc")
 											})
 									}
 							}

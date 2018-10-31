@@ -26,24 +26,25 @@ def gatherLoad(threshold_data, grades):
            print("H/W threshold reached or exceeded")
         else:
         # Calculate the grade of the load
-            send_grade = 10*I_s
+            calc_val = 10*I_s
+            send_grade = grades[0]
             for i in range(len(grades) - 1):
-                if send_grade >= grades[i] and send_grade < grades[i+1]:
+                if calc_val >= grades[i] and calc_val < grades[i+1]:
                     send_grade = grades[i]
         print(f"Sending grade {send_grade} to master")
-
     comm.barrier()
     
     return comm.gather(send_grade, root = 0)
 
 # Calculate the grade levels using grade_S
 def calcGrades(grade_s):
-    grades = [0,0,0,0,0]
+    grades = [0,0,0,0,0,0]
     grades[0] = grade_s/2
     grades[2] = (grades[0] + grade_s)/2
     grades[1] = (grades[0] + grades[2])/2
     grades[3] = (grades[2] + grade_s)/2
-    grades[4] = grade_s 
+    grades[4] = grade_s
+    grades[5] = 50 
     
     return grades
 
@@ -85,21 +86,11 @@ while True:
 
     # Gather the load data to master
     load_data = gatherLoad(threshold_data, grades)
-
     # Send threshold data to central server
     if rank == 0:
         send_data = {}
         for idx,val in enumerate(hosts):
             send_data[val] = load_data[idx]
+        print("ldata",load_data)
         sock.send(json.dumps(send_data).encode())
     time.sleep(20)
-    
-    
-
-    
-    
-
-
-
-
-
