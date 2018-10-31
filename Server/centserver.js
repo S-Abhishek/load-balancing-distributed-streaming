@@ -44,7 +44,7 @@ loadServer.listen( server_address , () => {
 
 function RemoteCopy(to_ip, locations, name)
 {	
-	candidates = adj_data[to]
+	candidates = adj_data[to_ip]
 	locations.push(central_server_ip)
 
 	for(i in candidates)
