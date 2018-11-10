@@ -8,7 +8,7 @@ import json
 
 ts = []
 
-def gatherLoad(threshold_data, grades):
+def gatherLoad(threshold_data, grades, sock):
     send_grade = 0
     if rank > 0:
 
@@ -16,7 +16,12 @@ def gatherLoad(threshold_data, grades):
         cpu_occ_rate = ps.cpu_percent(interval = 1 )/100
         disk_occ_rate = ps.disk_usage(os.getcwd()).percent/100
         mem_occ_rate = ps.virtual_memory().percent/100
-        I_s = math.sqrt( (disk_occ_rate**2 + mem_occ_rate**2 + cpu_occ_rate**2)/3 )
+
+        sock.send("Get avgreq".encode())
+        req_data = int(sock.recv(10).decode())
+        print("Reqdata",req_data)
+
+        I_s = math.sqrt( 0.8*(disk_occ_rate**2 + mem_occ_rate**2 + cpu_occ_rate**2)/3 + 0.2*req_data )
         
         # Check if any of the h/w usages cross the threshold
         if cpu_occ_rate >= threshold_data["thresholds"][0] or \
@@ -71,6 +76,13 @@ if rank == 0:
         hosts = host_file.read().split("\n")
     
     print(f"Regional Server addresses {hosts}")
+else:
+    server_address = "/tmp/reqnum"
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(server_address)
+    except socket.error:
+        print(socket.error)
 
 # Scatter the threshold data from master
 comm.barrier()
@@ -85,7 +97,7 @@ if rank>0:
 while True:
 
     # Gather the load data to master
-    load_data = gatherLoad(threshold_data, grades)
+    load_data = gatherLoad(threshold_data, grades, sock)
     # Send threshold data to central server
     if rank == 0:
         send_data = {}

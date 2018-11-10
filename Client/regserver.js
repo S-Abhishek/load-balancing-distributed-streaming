@@ -3,12 +3,39 @@ const app=express()
 const port = 8080
 const fs=require('fs')
 const path=require('path')
+const server_address = '/tmp/reqnum';
+const net = require('net');
 
+var reqnum = 0;
+
+fs.unlink(server_address, ()=>{
+    console.log("Unlinked");
+});
+
+const reqServer = net.createServer((socket) => {
+  }).on('error', (err) => {
+    // handle errors here
+    throw err;
+  }).on('connection', (socket) => {
+      console.log("Unix Socket for req Connected")
+      socket.on('data', (data) => {
+            //load_data = decoder.write(data).split(",").map(parseFloat);
+			//load_data = JSON.parse(decoder.write(data))
+			console.log("recieved request for reqnum sending ",reqnum);
+			socket.write(reqnum.toString());
+			reqnum = 0;
+      });
+  });
+
+reqServer.listen( server_address , () => {
+    console.log('reqServer bound');
+});
 
 
 app.get('/watch',function(req,res){
 
-	vid=req.query.id;
+	reqnum += 1;
+	vid=req.query.vid;
 	const path="/home/mpiuser/Videos/"+ vid +".mp4"
 	console.log("Video requested :" + path);
 	if(!fs.existsSync(path))
