@@ -14,8 +14,12 @@ def gatherLoad(threshold_data, grades, sock):
 
         # Retrive usage data
         cpu_occ_rate = ps.cpu_percent(interval = 1 )/100
-        disk_occ_rate = ps.disk_usage(os.getcwd()).percent/100
         mem_occ_rate = ps.virtual_memory().percent/100
+
+        diskio = psutil.disk_io_counters()
+        time.sleep(1)
+        diskio2 = psutil.disk_io_counters()
+        disk_occ_rate = ((diskio2.read_time - diskio.read_time) + (diskio2.write_time - diskio.write_time))/(1000)
 
         sock.send("Get avgreq".encode())
         req_data = int(sock.recv(10).decode())
