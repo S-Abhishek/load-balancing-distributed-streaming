@@ -1,6 +1,4 @@
-# load-balancing-distributed-streaming
-Load balancing a distributed system for effective streaming
-
-This project is to implement an effective way of streaming content using regional servers.Each regional server has a specific threshold.
-When this threshold value increases,It updates the value to the central server.
-The central server chooses the most effective slave server for streaming content to the client who requested it.
+# Distributed Load Balancing Video Streaming Cluster
+A Server cluster that attempts to balance video streaming load among the various severs.
+It takes several metrics into consideration such as such as CPU usage, Memory usage, Disk usage and the average number of requests of each server to make redirection decisions.
+Technologies used = NodeJs, Python, MPI, MongoDB.
